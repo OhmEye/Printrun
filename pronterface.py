@@ -724,6 +724,8 @@ class PronterWindow(wx.Frame,pronsole.pronsole):
         self.Bind(wx.EVT_MENU,self.upload,id=item.GetId())
         item = popupmenu.Append(-1,_("SD Print"))
         self.Bind(wx.EVT_MENU,self.sdprintfile,id=item.GetId())
+        item = popupmenu.Append(-1,_("SD Select"))
+        self.Bind(wx.EVT_MENU,self.sdselectfile,id=item.GetId())
         self.panel.PopupMenu(popupmenu, obj.GetPosition())
     
     def htemp_change(self,event):
@@ -1251,10 +1253,17 @@ class PronterWindow(wx.Frame,pronsole.pronsole):
         if "File opened" in l:
             wx.CallAfter(self.status.SetStatusText,l)
         if "File selected" in l:
+            wx.CallAfter(self.status.SetStatusText,_("SD File Selected"))
+            if(self.sdprinting==1):
+		wx.CallAfter(self.status.SetStatusText,_("Starting print"))
+		self.p.send_now("M24")
+		self.startcb()
+            return
+        if "File selected" in l:
             wx.CallAfter(self.status.SetStatusText,_("Starting print"))
-            self.sdprinting=1
-            self.p.send_now("M24")
-            self.startcb()
+#            self.sdprinting=1
+#            self.p.send_now("M24")
+#            self.startcb()
             return
         if "Done printing file" in l:
             wx.CallAfter(self.status.SetStatusText,l)
@@ -1484,8 +1493,15 @@ class PronterWindow(wx.Frame,pronsole.pronsole):
             wx.CallAfter(self.pausebtn.SetLabel, _("Pause"))
     
         
+    def sdselectfile(self,event):
+        self.on_startprint()
+	self.sdprinting=0
+        threading.Thread(target=self.getfiles).start()
+        pass
+
     def sdprintfile(self,event):
         self.on_startprint()
+	self.sdprinting=1
         threading.Thread(target=self.getfiles).start()
         pass
         
